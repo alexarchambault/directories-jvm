@@ -1,4 +1,4 @@
-//| mill-version: 1.1.9
+//| mill-version: 1.4.0-M2
 //| mill-jvm-version: temurin:23
 
 package build
@@ -7,9 +7,39 @@ import mill.*
 import mill.api.BuildCtx
 import mill.javalib.*
 import mill.javalib.publish.*
-import mill.util.VcsVersion
 
 import scala.util.Properties
+
+/** Version deduced from the `v*` git tags:
+  *   - if HEAD has such a tag, the value after the `v`
+  *   - else, the latest such tag, split by '.', keeping only the first 3 elements, with the last one
+  *     incremented, and a `-SNAPSHOT` suffix
+  */
+def computePublishVersion = Task.Input {
+  def git(args: String*): Option[String] = {
+    val res = os.proc("git", args).call(
+      cwd = BuildCtx.workspaceRoot,
+      check = false,
+      stderr = os.Pipe
+    )
+    if (res.exitCode == 0) Some(res.out.trim()).filter(_.nonEmpty)
+    else None
+  }
+
+  val headTag = git("tag", "--points-at", "HEAD", "--list", "v*", "--sort=-v:refname")
+    .flatMap(_.linesIterator.map(_.trim).find(_.nonEmpty))
+
+  headTag match {
+    case Some(tag) => tag.stripPrefix("v")
+    case None =>
+      val latest = git("describe", "--tags", "--abbrev=0", "--match", "v*")
+        .map(_.stripPrefix("v"))
+        .getOrElse("0.0.0")
+      val elems   = latest.split('.').take(3).toSeq
+      val lastNum = elems.last.takeWhile(_.isDigit).toIntOption.getOrElse(0)
+      (elems.init :+ (lastNum + 1).toString).mkString(".") + "-SNAPSHOT"
+  }
+}
 
 trait DirectoriesPublishModule extends PublishModule {
   def pomSettings = PomSettings(
@@ -23,21 +53,13 @@ trait DirectoriesPublishModule extends PublishModule {
     )
   )
   def publishVersion = Task {
-    val value = VcsVersion.vcsState().format()
-    if (value.contains("-")) {
-      val value0 = value.takeWhile(_ != '-')
-      val lastDotIdx = value0.lastIndexOf('.')
-      if (lastDotIdx < 0) value0 + "-SNAPSHOT"
-      else
-        value0.drop(lastDotIdx + 1).toIntOption match {
-          case Some(lastNum) =>
-            val prefix = value0.take(lastDotIdx)
-            s"$prefix.${lastNum + 1}-SNAPSHOT"
-          case None =>
-            value0 + "-SNAPSHOT"
-        }
-    }
-    else value
+    computePublishVersion()
+  }
+
+  // Maven Central requires a javadoc JAR, but not that it contains anything: publish
+  // almost empty ones (just a manifest) rather than running javadoc
+  def docJar = Task {
+    PathRef(mill.util.Jvm.createJar(Task.dest / "out.jar", Nil))
   }
 
   def localRepo = Task {
@@ -57,9 +79,6 @@ trait DirectoriesPublishModule extends PublishModule {
 object directories extends JavaModule with DirectoriesPublishModule {
   def javacOptions = super.javacOptions() ++ Seq(
     "--release", "8"
-  )
-  def javadocOptions = super.javadocOptions() ++ Seq(
-    "-Xdoclint:none"
   )
 
   def sources = Task.Sources(BuildCtx.workspaceRoot / "src/main/java")
