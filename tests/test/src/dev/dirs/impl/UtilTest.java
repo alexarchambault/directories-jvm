@@ -62,6 +62,31 @@ public final class UtilTest {
   }
 
   @Test
+  public void testTrimLowercaseAndReplaceWhitespacesNonBmp01() {
+    final String input    = "\uD83D\uDE00 My App";
+    final String actual   = Util.trimLowercaseReplaceWhitespace(input, "-", true);
+    final String expected = "\uD83D\uDE00-my-app";
+    assertEquals(input, expected, actual);
+  }
+
+  @Test
+  public void testTrimLowercaseAndReplaceWhitespacesNonBmp02() {
+    // U+10400 DESERET CAPITAL LETTER LONG I, lowercases to U+10428
+    final String input    = " \uD801\uDC00pp  \uD83D\uDE00 ";
+    final String actual   = Util.trimLowercaseReplaceWhitespace(input, "", true);
+    final String expected = "\uD801\uDC28pp\uD83D\uDE00";
+    assertEquals(input, expected, actual);
+  }
+
+  @Test
+  public void testTrimLowercaseAndReplaceWhitespacesNonBmp03() {
+    final String input    = "\uD801\uDC00 \uD801\uDC00";
+    final String actual   = Util.trimLowercaseReplaceWhitespace(input, "-", false);
+    final String expected = "\uD801\uDC00-\uD801\uDC00";
+    assertEquals(input, expected, actual);
+  }
+
+  @Test
   public void testMacOSApplicationPath01() {
     final String inputQual = "";
     final String inputOrga = "Foo Bar";
