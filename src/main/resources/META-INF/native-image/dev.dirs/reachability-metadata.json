@@ -4,9 +4,10 @@
     "multi-release section of this JAR), which calls into Windows via the",
     "java.lang.foreign API. Native images need those downcalls registered upfront,",
     "else they throw MissingForeignRegistrationError at run time on Windows.",
-    "These are WindowsForeign's only downcalls: CLSIDFromString(void*, void*) and",
-    "SHGetKnownFolderPath(void*, int, void*, void*). Both return C long, which is",
-    "32-bit on Windows, hence 'int' (WindowsForeign's C_LONG is ValueLayout.JAVA_INT).",
+    "These are WindowsForeign's only downcalls: CLSIDFromString(void*, void*),",
+    "SHGetKnownFolderPath(void*, int, void*, void*) and CoTaskMemFree(void*).",
+    "The first two return HRESULT, a C long, which is 32-bit on Windows, hence 'int'",
+    "(WindowsForeign's C_LONG is ValueLayout.JAVA_INT). CoTaskMemFree returns void.",
     "WindowsForeign's C_POINTER is ADDRESS.withTargetLayout(...), which native-image",
     "matches against the canonical 'void*' layout.",
     "Note that callers also want --enable-native-access=ALL-UNNAMED, otherwise the",
@@ -21,6 +22,10 @@
       {
         "returnType" : "int",
         "parameterTypes" : [ "void*", "int", "void*", "void*" ]
+      },
+      {
+        "returnType" : "void",
+        "parameterTypes" : [ "void*" ]
       }
     ]
   }
