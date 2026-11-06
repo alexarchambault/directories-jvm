@@ -1,9 +1,5 @@
 package dev.dirs.impl;
 
-import dev.dirs.UnsupportedOperatingSystemException;
-
-import java.util.Locale;
-
 import static java.util.Objects.requireNonNull;
 
 public final class Util {
@@ -47,24 +43,23 @@ public final class Util {
   public static String trimLowercaseReplaceWhitespace(String value, String replacement, boolean lowerCase) {
     StringBuilder buf = new StringBuilder(value.length());
     boolean charsBefore = false;
-    int codePointCount = value.codePointCount(0, value.length());
+    int length = value.length();
     boolean replace = !replacement.isEmpty();
-    for (int index = 0; index < codePointCount; index += 1) {
+    int index = 0;
+    while (index < length) {
       int codepoint = value.codePointAt(index);
+      int next = index + Character.charCount(codepoint);
       if (codepoint == ' ') {
-        if (charsBefore && replace && codePointExistsAndNotSpace(value, codePointCount, index + 1)) {
-          buf.append('-');
+        if (charsBefore && replace && next < length && value.charAt(next) != ' ') {
+          buf.append(replacement);
           charsBefore = false;
         }
       } else {
         buf.appendCodePoint(lowerCase ? Character.toLowerCase(codepoint) : codepoint);
         charsBefore = true;
       }
+      index = next;
     }
     return buf.toString();
-  }
-
-  private static boolean codePointExistsAndNotSpace(String value, int count, int index) {
-    return index < count && value.codePointAt(index) != ' ';
   }
 }
