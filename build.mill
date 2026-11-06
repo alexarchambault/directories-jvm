@@ -171,6 +171,7 @@ trait Tests extends Cross.Module[String] with JavaModule {
       // no Temurin 8 builds for macOS arm64
       case "8" => if (Properties.isMac) "zulu:8" else "8"
       case "11" => if (Properties.isMac) "zulu:11" else "11"
+      case "22" => "22"
       case _ => super.jvmId()
     }
   }
@@ -224,7 +225,9 @@ trait TestsJni extends Cross.Module[String] with JavaModule {
   }
 }
 
-object tests extends Cross[Tests]("8", "11", "default")
+// On Windows: 8 and 11 exercise the PowerShell-based implementation, 22 and default (23, the JVM
+// Mill runs on) the JDK 22+ foreign function API one, from the multi-release overlay
+object tests extends Cross[Tests]("8", "11", "22", "default")
 
 object `tests-jni` extends Cross[TestsJni](
   if (Properties.isWin) Seq("8", "11", "default")
