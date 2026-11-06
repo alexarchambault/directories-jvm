@@ -5,14 +5,23 @@ import java.util.Locale;
 public class Constants {
 
   static final String operatingSystemName = System.getProperty("os.name");
+  /** The operating system the library is running on, as one of the code constants of this class ({@link #LIN}, {@link #MAC}, {@link #WIN}, …). */
   public static final char operatingSystem;
-  static final char LIN = 'l';
-  static final char MAC = 'm';
-  static final char WIN = 'w';
-  static final char BSD = 'b';
-  static final char SOLARIS = 's';
-  static final char IBMI = 'i';
-  static final char AIX = 'a';
+
+  /** Value of {@link #operatingSystem} on Linux. */
+  public static final char LIN = 'l';
+  /** Value of {@link #operatingSystem} on macOS. */
+  public static final char MAC = 'm';
+  /** Value of {@link #operatingSystem} on Windows. */
+  public static final char WIN = 'w';
+  /** Value of {@link #operatingSystem} on BSD systems. */
+  public static final char BSD = 'b';
+  /** Value of {@link #operatingSystem} on Solaris. */
+  public static final char SOLARIS = 's';
+  /** Value of {@link #operatingSystem} on IBM i. */
+  public static final char IBMI = 'i';
+  /** Value of {@link #operatingSystem} on AIX. */
+  public static final char AIX = 'a';
 
   static {
     final String os = operatingSystemName.toLowerCase(Locale.ROOT);
