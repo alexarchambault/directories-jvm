@@ -59,8 +59,28 @@ public final class WindowsPowerShell implements Windows {
    * the {@code coursier.directories.powershell-debug} Java property or the
    * {@code COURSIER_DIRECTORIES_POWERSHELL_DEBUG} environment variable, set to {@code true}.
    * </p>
+   * <p>
+   * As starting PowerShell takes time, successfully retrieved paths are cached for the lifetime
+   * of the JVM (they don't change in practice), and are shared by all {@code WindowsPowerShell}
+   * instances. Only the GUIDs not in cache are queried, in a single PowerShell process. Use
+   * {@link #clearCache()} to empty that cache.
+   * </p>
    */
   public String[] winDirs(String... guids) {
+    return CACHE.get(guids, WindowsPowerShell::queryKnownFolders);
+  }
+
+  private static final KnownFolderCache CACHE = new KnownFolderCache();
+
+  /**
+   * Empties the cache of known folder paths used by {@link #winDirs(String...)}, so that
+   * subsequent calls query PowerShell again.
+   */
+  public static void clearCache() {
+    CACHE.clear();
+  }
+
+  private static String[] queryKnownFolders(String... guids) {
     int guidsLength = guids.length;
     StringBuilder buf = new StringBuilder(guidsLength * 68);
     for (int i = 0; i < guidsLength; i++) {
