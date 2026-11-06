@@ -26,13 +26,16 @@ public final class Linux {
   }
 
   public static String runtimeDir(String path) {
-    String runDir = System.getenv("XDG_RUNTIME_DIR");
+    return runtimeDir(System.getenv("XDG_RUNTIME_DIR"), path);
+  }
+
+  static String runtimeDir(String runDir, String path) {
     if (Util.isNullOrEmpty(runDir))
       return null;
     else if (path == null)
       return runDir;
     else
-      return runDir + '/' + path;
+      return ensureSingleSlash(runDir, path);
   }
 
   public static String executableDir(String homeDir, String dataDir) {
