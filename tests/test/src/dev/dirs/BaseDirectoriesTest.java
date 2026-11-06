@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import static dev.dirs.TestEnv.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
@@ -18,7 +19,7 @@ public final class BaseDirectoriesTest {
     assertEquals("/home/alice/.config",             dirs.configDir);
     assertEquals("/home/alice/.local/share",        dirs.dataDir);
     assertEquals("/home/alice/.local/share",        dirs.dataLocalDir);
-    assertEquals("/home/alice/.local/share/../bin/", dirs.executableDir);
+    assertEquals("/home/alice/.local/share/../bin",  dirs.executableDir);
     assertEquals("/home/alice/.config",             dirs.preferenceDir);
     assertNull(dirs.runtimeDir);
   }
@@ -44,7 +45,7 @@ public final class BaseDirectoriesTest {
   @Test
   public void linuxExecutableDirFromXdgDataHome() {
     BaseDirectories dirs = BaseDirectories.get(noWindows(), linux("XDG_DATA_HOME", "/xdg/data"));
-    assertEquals("/xdg/data/../bin/", dirs.executableDir);
+    assertEquals("/xdg/data/../bin", dirs.executableDir);
   }
 
   @Test
@@ -73,13 +74,26 @@ public final class BaseDirectoriesTest {
   public void mac() {
     BaseDirectories dirs = BaseDirectories.get(noWindows(), TestEnv.mac("XDG_CACHE_HOME", "/xdg/cache", "XDG_RUNTIME_DIR", "/run/user/1001"));
     assertEquals("/Users/Alice",                                dirs.homeDir);
-    assertEquals("/Users/Alice/Library/Caches/",                dirs.cacheDir);
-    assertEquals("/Users/Alice/Library/Application Support/",   dirs.configDir);
-    assertEquals("/Users/Alice/Library/Application Support/",   dirs.dataDir);
-    assertEquals("/Users/Alice/Library/Application Support/",   dirs.dataLocalDir);
+    assertEquals("/Users/Alice/Library/Caches",                 dirs.cacheDir);
+    assertEquals("/Users/Alice/Library/Application Support",    dirs.configDir);
+    assertEquals("/Users/Alice/Library/Application Support",    dirs.dataDir);
+    assertEquals("/Users/Alice/Library/Application Support",    dirs.dataLocalDir);
     assertNull(dirs.executableDir);
-    assertEquals("/Users/Alice/Library/Preferences/",           dirs.preferenceDir);
+    assertEquals("/Users/Alice/Library/Preferences",            dirs.preferenceDir);
     assertNull(dirs.runtimeDir);
+  }
+
+  @Test
+  public void noTrailingSlashes() {
+    for (BaseDirectories dirs : new BaseDirectories[] {
+        BaseDirectories.get(noWindows(), linux()),
+        BaseDirectories.get(noWindows(), linux("XDG_DATA_HOME", "/xdg/data")),
+        BaseDirectories.get(noWindows(), TestEnv.mac()),
+        BaseDirectories.get(fakeWindows(), TestEnv.windows())
+    })
+      for (String dir : new String[] {dirs.homeDir, dirs.cacheDir, dirs.configDir, dirs.dataDir, dirs.dataLocalDir, dirs.executableDir, dirs.preferenceDir, dirs.runtimeDir})
+        if (dir != null)
+          assertFalse(dir, dir.endsWith("/") || dir.endsWith("\\"));
   }
 
   @Test

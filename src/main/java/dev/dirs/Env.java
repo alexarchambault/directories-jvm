@@ -71,7 +71,7 @@ final class Env {
   String linuxExecutableDir(String homeDir, String dataDir) {
     String binDir = getenv("XDG_BIN_HOME");
     if (Util.isNullOrEmpty(binDir))
-      return Util.defaultIfNullOrEmptyExtended(dataDir, "/../bin/", homeDir, "/.local/bin/");
+      return Util.defaultIfNullOrEmptyExtended(dataDir, "/../bin", homeDir, "/.local/bin");
     else
       return binDir;
   }

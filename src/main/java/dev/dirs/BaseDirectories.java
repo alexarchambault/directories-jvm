@@ -275,12 +275,12 @@ public final class BaseDirectories {
         break;
       case Constants.MAC:
         homeDir       = env.homeDir();
-        cacheDir      = homeDir + "/Library/Caches/";
-        configDir     = homeDir + "/Library/Application Support/";
+        cacheDir      = homeDir + "/Library/Caches";
+        configDir     = homeDir + "/Library/Application Support";
         dataDir       = configDir;
         dataLocalDir  = configDir;
         executableDir = null;
-        preferenceDir = homeDir + "/Library/Preferences/";
+        preferenceDir = homeDir + "/Library/Preferences";
         runtimeDir    = null;
         break;
       case Constants.WIN:
