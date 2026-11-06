@@ -235,7 +235,5 @@ trait TestsJni extends Cross.Module[String] with JavaModule {
 // Mill runs on) the JDK 22+ foreign function API one, from the multi-release overlay
 object tests extends Cross[Tests]("8", "11", "22", "default")
 
-object `tests-jni` extends Cross[TestsJni](
-  if (Properties.isWin) Seq("8", "11", "default")
-  else Seq.empty[String]
-)
+// Windows-specific tests are no-ops on other OSes, but some tests (Java version parsing) run everywhere
+object `tests-jni` extends Cross[TestsJni]("8", "11", "default")
