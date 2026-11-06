@@ -104,7 +104,7 @@ object directories extends JavaModule with DirectoriesPublishModule {
 object `directories-jni` extends JavaModule with DirectoriesPublishModule {
   def moduleDeps = Seq(directories)
   def mvnDeps = Seq(
-    mvn"io.get-coursier.jniutils:windows-jni-utils:0.3.3"
+    mvn"io.get-coursier.jniutils:windows-jni-utils:0.3.4"
   )
   def javacOptions = super.javacOptions() ++ Seq(
     "--release", "8"
