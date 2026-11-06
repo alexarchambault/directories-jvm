@@ -1,9 +1,9 @@
 package dev.dirs;
 
-import dev.dirs.impl.Linux;
 import dev.dirs.impl.Util;
 import dev.dirs.impl.Windows;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /** {@code BaseDirectories} provides paths of user-invisible standard directories, following the conventions of the operating system the library is running on.
@@ -70,7 +70,7 @@ public final class BaseDirectories {
     * </tr>
     * <tr>
     * <td>Windows</td>
-    * <td>{@code {FOLDERID_LocalAppData}}\cache</td>
+    * <td>{@code {FOLDERID_LocalAppData}}</td>
     * <td>C:\Users\Alice\AppData\Local</td>
     * </tr>
     * </table>
@@ -247,37 +247,41 @@ public final class BaseDirectories {
     * @return A new {@code BaseDirectories} instance.
     */
   public static BaseDirectories get() {
-    return new BaseDirectories(Windows.getDefaultSupplier());
+    return get(Windows.getDefaultSupplier());
   }
 
   public static BaseDirectories get(Supplier<Windows> windows) {
-    return new BaseDirectories(windows);
+    return get(windows, Env.SYSTEM);
   }
 
-  private BaseDirectories(Supplier<Windows> windows) {
-    switch (Constants.operatingSystem) {
+  static BaseDirectories get(Supplier<Windows> windows, Env env) {
+    return new BaseDirectories(windows, env);
+  }
+
+  private BaseDirectories(Supplier<Windows> windows, Env env) {
+    switch (env.operatingSystem) {
       case Constants.LIN:
       case Constants.BSD:
       case Constants.SOLARIS:
       case Constants.IBMI:
       case Constants.AIX:
-        homeDir       = System.getProperty("user.home");
-        cacheDir      = Util.defaultIfNullOrEmpty(System.getenv("XDG_CACHE_HOME"),  homeDir, "/.cache");
-        configDir     = Util.defaultIfNullOrEmpty(System.getenv("XDG_CONFIG_HOME"), homeDir, "/.config");
-        dataDir       = Util.defaultIfNullOrEmpty(System.getenv("XDG_DATA_HOME"),   homeDir, "/.local/share");
+        homeDir       = env.homeDir();
+        cacheDir      = Util.defaultIfNullOrEmpty(env.getenv("XDG_CACHE_HOME"),  homeDir, "/.cache");
+        configDir     = Util.defaultIfNullOrEmpty(env.getenv("XDG_CONFIG_HOME"), homeDir, "/.config");
+        dataDir       = Util.defaultIfNullOrEmpty(env.getenv("XDG_DATA_HOME"),   homeDir, "/.local/share");
         dataLocalDir  = dataDir;
-        executableDir = Linux.executableDir(homeDir, dataDir);
+        executableDir = env.linuxExecutableDir(homeDir, dataDir);
         preferenceDir = configDir;
-        runtimeDir    = Linux.runtimeDir(null);
+        runtimeDir    = env.linuxRuntimeDir(null);
         break;
       case Constants.MAC:
-        homeDir       = System.getProperty("user.home");
-        cacheDir      = homeDir + "/Library/Caches/";
-        configDir     = homeDir + "/Library/Application Support/";
+        homeDir       = env.homeDir();
+        cacheDir      = homeDir + "/Library/Caches";
+        configDir     = homeDir + "/Library/Application Support";
         dataDir       = configDir;
         dataLocalDir  = configDir;
         executableDir = null;
-        preferenceDir = homeDir + "/Library/Preferences/";
+        preferenceDir = homeDir + "/Library/Preferences";
         runtimeDir    = null;
         break;
       case Constants.WIN:
@@ -305,7 +309,7 @@ public final class BaseDirectories {
         "  dataDir       = '" + dataDir        + "'\n" +
         "  dataLocalDir  = '" + dataLocalDir   + "'\n" +
         "  executableDir = '" + executableDir  + "'\n" +
-        "  preferenceDir = '" + preferenceDir + "'\n" +
+        "  preferenceDir = '" + preferenceDir  + "'\n" +
         "  runtimeDir    = '" + runtimeDir     + "'\n";
   }
 
@@ -313,39 +317,19 @@ public final class BaseDirectories {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     BaseDirectories that = (BaseDirectories) o;
-
-    if (homeDir       != null ? !homeDir      .equals(that.homeDir)       : that.homeDir       != null)
-      return false;
-    if (cacheDir      != null ? !cacheDir     .equals(that.cacheDir)      : that.cacheDir      != null)
-      return false;
-    if (configDir     != null ? !configDir    .equals(that.configDir)     : that.configDir     != null)
-      return false;
-    if (dataDir       != null ? !dataDir      .equals(that.dataDir)       : that.dataDir       != null)
-      return false;
-    if (dataLocalDir  != null ? !dataLocalDir .equals(that.dataLocalDir)  : that.dataLocalDir  != null)
-      return false;
-    if (executableDir != null ? !executableDir.equals(that.executableDir) : that.executableDir != null)
-      return false;
-    if (preferenceDir != null ? !preferenceDir.equals(that.preferenceDir) : that.preferenceDir != null)
-      return false;
-    if (runtimeDir     != null ? !runtimeDir    .equals(that.runtimeDir)     : that.runtimeDir     != null)
-      return false;
-    return true;
+    return Objects.equals(homeDir, that.homeDir) &&
+        Objects.equals(cacheDir, that.cacheDir) &&
+        Objects.equals(configDir, that.configDir) &&
+        Objects.equals(dataDir, that.dataDir) &&
+        Objects.equals(dataLocalDir, that.dataLocalDir) &&
+        Objects.equals(executableDir, that.executableDir) &&
+        Objects.equals(preferenceDir, that.preferenceDir) &&
+        Objects.equals(runtimeDir, that.runtimeDir);
   }
 
   @Override
   public int hashCode() {
-    int result = 0;
-    result = 31 * result + (homeDir       != null ? homeDir      .hashCode() : 0);
-    result = 31 * result + (cacheDir      != null ? cacheDir     .hashCode() : 0);
-    result = 31 * result + (configDir     != null ? configDir    .hashCode() : 0);
-    result = 31 * result + (dataDir       != null ? dataDir      .hashCode() : 0);
-    result = 31 * result + (dataLocalDir  != null ? dataLocalDir .hashCode() : 0);
-    result = 31 * result + (executableDir != null ? executableDir.hashCode() : 0);
-    result = 31 * result + (preferenceDir != null ? preferenceDir.hashCode() : 0);
-    result = 31 * result + (runtimeDir    != null ? runtimeDir   .hashCode() : 0);
-    return result;
+    return Objects.hash(homeDir, cacheDir, configDir, dataDir, dataLocalDir, executableDir, preferenceDir, runtimeDir);
   }
 }
