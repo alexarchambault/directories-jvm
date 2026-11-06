@@ -97,7 +97,10 @@ object directories extends JavaModule with DirectoriesPublishModule {
     resourceDirs() ++ Seq(jdk22ClassesResources())
   }
   def manifest = Task {
-    super.manifest().add("Multi-Release" -> "true")
+    super.manifest().add(
+      "Multi-Release" -> "true",
+      "Automatic-Module-Name" -> "dev.dirs"
+    )
   }
 }
 
@@ -109,6 +112,9 @@ object `directories-jni` extends JavaModule with DirectoriesPublishModule {
   def javacOptions = super.javacOptions() ++ Seq(
     "--release", "8"
   )
+  def manifest = Task {
+    super.manifest().add("Automatic-Module-Name" -> "dev.dirs.jni")
+  }
 }
 
 object jdk22 extends JavaModule {
@@ -118,10 +124,60 @@ object jdk22 extends JavaModule {
   )
 }
 
+/** Test module whose tests can run on JDK 8.
+  *
+  * Mill's test runner is compiled for Java 11, so it can't run on a JDK 8. When `runsOnJdk8` is
+  * true, tests are run with JUnit's own `JUnitCore` runner instead, in a JDK 8 process.
+  */
+trait Jdk8CompatibleTests extends JavaModule with TestModule {
+  def runsOnJdk8: Boolean
+
+  override def testTask(
+      args: Task[Seq[String]],
+      globSelectors: Task[Seq[String]]
+  ): Task[(msg: String, results: Seq[mill.javalib.testrunner.TestResult])] =
+    if (runsOnJdk8) junitCoreTestTask(globSelectors)
+    else super.testTask(args, globSelectors)
+
+  private def junitCoreTestTask(
+      globSelectors: Task[Seq[String]]
+  ): Task[(msg: String, results: Seq[mill.javalib.testrunner.TestResult])] = Task.Anon {
+    val selectorRegexes = globSelectors().map { glob =>
+      glob.split("\\*", -1).map(java.util.regex.Pattern.quote).mkString(".*").r
+    }
+    val classes = discoveredTestClasses().filter { cls =>
+      selectorRegexes.isEmpty || selectorRegexes.exists(_.matches(cls))
+    }
+    if (classes.isEmpty)
+      ("No test classes to run", Nil)
+    else {
+      val javaExe = javaHome() match {
+        case Some(home) =>
+          (home.path / "bin" / (if (Properties.isWin) "java.exe" else "java")).toString
+        case None => "java"
+      }
+      val cp = runClasspath().map(_.path.toString).mkString(java.io.File.pathSeparator)
+      val res = os.proc(javaExe, forkArgs(), "-cp", cp, "org.junit.runner.JUnitCore", classes)
+        .call(
+          cwd = forkWorkingDir(),
+          env = allForkEnv(),
+          stdout = os.Inherit,
+          check = false
+        )
+      if (res.exitCode != 0)
+        Task.fail(s"JUnit tests failed (exit code ${res.exitCode})")
+      (s"Ran ${classes.length} test class(es) with JUnitCore", Nil)
+    }
+  }
+}
+
 trait Tests extends Cross.Module[String] with JavaModule {
   def jvmId = Task {
     crossValue match {
+      // no Temurin 8 builds for macOS arm64
+      case "8" => if (Properties.isMac) "zulu:8" else "8"
       case "11" => if (Properties.isMac) "zulu:11" else "11"
+      case "22" => "22"
       case _ => super.jvmId()
     }
   }
@@ -135,7 +191,8 @@ trait Tests extends Cross.Module[String] with JavaModule {
     ) ++ super.repositories()
   }
 
-  object test extends JavaTests {
+  object test extends JavaTests with Jdk8CompatibleTests {
+    def runsOnJdk8 = crossValue == "8"
     def mvnDeps = super.mvnDeps() ++ Seq(
       mvn"junit:junit:4.13.2",
       mvn"com.github.sbt:junit-interface:0.13.3"
@@ -147,6 +204,8 @@ trait Tests extends Cross.Module[String] with JavaModule {
 trait TestsJni extends Cross.Module[String] with JavaModule {
   def jvmId = Task {
     crossValue match {
+      // no Temurin 8 builds for macOS arm64
+      case "8" => if (Properties.isMac) "zulu:8" else "8"
       case "11" => if (Properties.isMac) "zulu:11" else "11"
       case _ => super.jvmId()
     }
@@ -162,7 +221,8 @@ trait TestsJni extends Cross.Module[String] with JavaModule {
     ) ++ super.repositories()
   }
 
-  object test extends JavaTests {
+  object test extends JavaTests with Jdk8CompatibleTests {
+    def runsOnJdk8 = crossValue == "8"
     def mvnDeps = super.mvnDeps() ++ Seq(
       mvn"junit:junit:4.13.2",
       mvn"com.github.sbt:junit-interface:0.13.3"
@@ -171,9 +231,11 @@ trait TestsJni extends Cross.Module[String] with JavaModule {
   }
 }
 
-object tests extends Cross[Tests]("11", "default")
+// On Windows: 8 and 11 exercise the PowerShell-based implementation, 22 and default (23, the JVM
+// Mill runs on) the JDK 22+ foreign function API one, from the multi-release overlay
+object tests extends Cross[Tests]("8", "11", "22", "default")
 
 object `tests-jni` extends Cross[TestsJni](
-  if (Properties.isWin) Seq("11", "default")
+  if (Properties.isWin) Seq("8", "11", "default")
   else Seq.empty[String]
 )
