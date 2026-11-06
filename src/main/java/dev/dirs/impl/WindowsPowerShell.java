@@ -6,16 +6,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
 import java.nio.charset.Charset;
+import java.util.Base64;
 
 public final class WindowsPowerShell implements Windows {
 
   public WindowsPowerShell() {}
 
   private static final String UTF8_BOM = "\ufeff";
-  private static Object base64Encoder = null;
-  private static Method base64EncodeMethod = null;
   // This string needs to end up being a multiple of 3 bytes after conversion to UTF-16. (It is currently 1200 bytes.)
   // This is because Base64 converts 3 bytes to 4 letters; other numbers of bytes would introduce padding, which
   // would make it harder to simply concatenate this precomputed string with whatever directories the user requests.
@@ -59,30 +57,9 @@ public final class WindowsPowerShell implements Windows {
     }
   }
 
-  private static String toUTF16LEBase64(String script) {
+  static String toUTF16LEBase64(String script) {
     byte[] scriptInUtf16LEBytes = script.getBytes(Charset.forName("UTF-16LE"));
-    if (base64EncodeMethod == null) {
-      initBase64Encoding();
-    }
-    try {
-      return (String) base64EncodeMethod.invoke(base64Encoder, scriptInUtf16LEBytes);
-    } catch (Exception e) {
-      throw new RuntimeException("Base64 encoding failed!", e);
-    }
-  }
-
-  private static void initBase64Encoding() {
-    try {
-      base64Encoder = Class.forName("java.util.Base64").getMethod("getEncoder").invoke(null);
-      base64EncodeMethod = base64Encoder.getClass().getMethod("encodeToString", byte[].class);
-    } catch (Exception e1) {
-      try {
-        base64EncodeMethod = Class.forName("sun.misc.BASE64Encoder").getMethod("encode", byte[].class);
-      } catch (Exception e2) {
-        throw new RuntimeException(
-            "Could not find any viable Base64 encoder! (java.util.Base64 failed with: " + e1.getMessage() + ")", e2);
-      }
-    }
+    return Base64.getEncoder().encodeToString(scriptInUtf16LEBytes);
   }
 
   private static boolean debug() {
