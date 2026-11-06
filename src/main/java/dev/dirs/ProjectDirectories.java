@@ -1,6 +1,5 @@
 package dev.dirs;
 
-import dev.dirs.impl.Linux;
 import dev.dirs.impl.MacOs;
 import dev.dirs.impl.Util;
 import dev.dirs.impl.Windows;
@@ -233,6 +232,10 @@ public final class ProjectDirectories {
   }
 
   public static ProjectDirectories fromPath(String path, Supplier<Windows> windows) {
+    return fromPath(path, windows, Env.SYSTEM);
+  }
+
+  static ProjectDirectories fromPath(String path, Supplier<Windows> windows, Env env) {
     String homeDir;
     String cacheDir;
     String configDir;
@@ -240,22 +243,22 @@ public final class ProjectDirectories {
     String dataLocalDir;
     String preferenceDir;
     String runtimeDir = null;
-    switch (Constants.operatingSystem) {
+    switch (env.operatingSystem) {
       case Constants.LIN:
       case Constants.BSD:
       case Constants.SOLARIS:
       case Constants.IBMI:
       case Constants.AIX:
-        homeDir       = System.getProperty("user.home");
-        cacheDir      = Util.defaultIfNullOrEmptyExtended(System.getenv("XDG_CACHE_HOME"),  path, homeDir + "/.cache/",       path);
-        configDir     = Util.defaultIfNullOrEmptyExtended(System.getenv("XDG_CONFIG_HOME"), path, homeDir + "/.config/",      path);
-        dataDir       = Util.defaultIfNullOrEmptyExtended(System.getenv("XDG_DATA_HOME"),   path, homeDir + "/.local/share/", path);
+        homeDir       = env.homeDir();
+        cacheDir      = Util.defaultIfNullOrEmptyExtended(env.getenv("XDG_CACHE_HOME"),  path, homeDir + "/.cache/",       path);
+        configDir     = Util.defaultIfNullOrEmptyExtended(env.getenv("XDG_CONFIG_HOME"), path, homeDir + "/.config/",      path);
+        dataDir       = Util.defaultIfNullOrEmptyExtended(env.getenv("XDG_DATA_HOME"),   path, homeDir + "/.local/share/", path);
         dataLocalDir  = dataDir;
         preferenceDir = configDir;
-        runtimeDir    = Linux.runtimeDir(path);
+        runtimeDir    = env.linuxRuntimeDir(path);
         break;
       case Constants.MAC:
-        homeDir       = System.getProperty("user.home");
+        homeDir       = env.homeDir();
         cacheDir      = homeDir + "/Library/Caches/"              + path;
         configDir     = homeDir + "/Library/Application Support/" + path;
         dataDir       = homeDir + "/Library/Application Support/" + path;
@@ -331,6 +334,38 @@ public final class ProjectDirectories {
     if (path.isEmpty())
       throw new UnsupportedOperationException("organization and application arguments cannot both be null/empty/blank");
     return fromPath(path, windows);
+  }
+
+  // Same as from(String, String, String, Supplier<Windows>), but reading the OS and environment from env.
+  // Keep the two in sync (ideally, the public overload should simply delegate to this one).
+  static ProjectDirectories from(String qualifier, String organization, String application, Supplier<Windows> windows, Env env) {
+    if (Util.isNullOrEmpty(organization) && Util.isNullOrEmpty(application))
+      throw new UnsupportedOperationException("organization and application arguments cannot both be null/empty");
+    String path;
+    switch (env.operatingSystem) {
+      case Constants.LIN:
+      case Constants.BSD:
+      case Constants.SOLARIS:
+      case Constants.IBMI:
+      case Constants.AIX:
+        // Fall back to the organization when no application name is given, so that the
+        // project directories never end up being the base directories themselves
+        path = Util.isNullOrEmpty(application) ? "" : Util.trimLowercaseReplaceWhitespace(application, "", true);
+        if (path.isEmpty() && !Util.isNullOrEmpty(organization))
+          path = Util.trimLowercaseReplaceWhitespace(organization, "", true);
+        break;
+      case Constants.MAC:
+        path = MacOs.applicationPath(qualifier, organization, application);
+        break;
+      case Constants.WIN:
+        path = Windows.applicationPath(qualifier, organization, application);
+        break;
+      default:
+        throw new UnsupportedOperatingSystemException("Project directories are not supported on " + Constants.operatingSystemName);
+    }
+    if (path.isEmpty())
+      throw new UnsupportedOperationException("organization and application arguments cannot both be null/empty/blank");
+    return fromPath(path, windows, env);
   }
 
   @Override

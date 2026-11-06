@@ -1,6 +1,5 @@
 package dev.dirs;
 
-import dev.dirs.impl.Linux;
 import dev.dirs.impl.Util;
 import dev.dirs.impl.Windows;
 
@@ -247,31 +246,35 @@ public final class BaseDirectories {
     * @return A new {@code BaseDirectories} instance.
     */
   public static BaseDirectories get() {
-    return new BaseDirectories(Windows.getDefaultSupplier());
+    return get(Windows.getDefaultSupplier());
   }
 
   public static BaseDirectories get(Supplier<Windows> windows) {
-    return new BaseDirectories(windows);
+    return get(windows, Env.SYSTEM);
   }
 
-  private BaseDirectories(Supplier<Windows> windows) {
-    switch (Constants.operatingSystem) {
+  static BaseDirectories get(Supplier<Windows> windows, Env env) {
+    return new BaseDirectories(windows, env);
+  }
+
+  private BaseDirectories(Supplier<Windows> windows, Env env) {
+    switch (env.operatingSystem) {
       case Constants.LIN:
       case Constants.BSD:
       case Constants.SOLARIS:
       case Constants.IBMI:
       case Constants.AIX:
-        homeDir       = System.getProperty("user.home");
-        cacheDir      = Util.defaultIfNullOrEmpty(System.getenv("XDG_CACHE_HOME"),  homeDir, "/.cache");
-        configDir     = Util.defaultIfNullOrEmpty(System.getenv("XDG_CONFIG_HOME"), homeDir, "/.config");
-        dataDir       = Util.defaultIfNullOrEmpty(System.getenv("XDG_DATA_HOME"),   homeDir, "/.local/share");
+        homeDir       = env.homeDir();
+        cacheDir      = Util.defaultIfNullOrEmpty(env.getenv("XDG_CACHE_HOME"),  homeDir, "/.cache");
+        configDir     = Util.defaultIfNullOrEmpty(env.getenv("XDG_CONFIG_HOME"), homeDir, "/.config");
+        dataDir       = Util.defaultIfNullOrEmpty(env.getenv("XDG_DATA_HOME"),   homeDir, "/.local/share");
         dataLocalDir  = dataDir;
-        executableDir = Linux.executableDir(homeDir, dataDir);
+        executableDir = env.linuxExecutableDir(homeDir, dataDir);
         preferenceDir = configDir;
-        runtimeDir    = Linux.runtimeDir(null);
+        runtimeDir    = env.linuxRuntimeDir(null);
         break;
       case Constants.MAC:
-        homeDir       = System.getProperty("user.home");
+        homeDir       = env.homeDir();
         cacheDir      = homeDir + "/Library/Caches/";
         configDir     = homeDir + "/Library/Application Support/";
         dataDir       = configDir;

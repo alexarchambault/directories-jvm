@@ -1,6 +1,5 @@
 package dev.dirs;
 
-import dev.dirs.impl.Linux;
 import dev.dirs.impl.Util;
 import dev.dirs.impl.Windows;
 
@@ -303,29 +302,33 @@ public final class UserDirectories {
    }
 
   public static UserDirectories get(Supplier<Windows> windows) {
-     return new UserDirectories(windows);
+     return get(windows, Env.SYSTEM);
    }
 
-  private UserDirectories(Supplier<Windows> windows) {
-    switch (Constants.operatingSystem) {
+  static UserDirectories get(Supplier<Windows> windows, Env env) {
+    return new UserDirectories(windows, env);
+  }
+
+  private UserDirectories(Supplier<Windows> windows, Env env) {
+    switch (env.operatingSystem) {
       case Constants.LIN:
       case Constants.BSD:
       case Constants.SOLARIS:
       case Constants.AIX:
-        String[] userDirs = Linux.getXDGUserDirs("MUSIC", "DESKTOP", "DOCUMENTS", "DOWNLOAD", "PICTURES", "PUBLICSHARE", "TEMPLATES", "VIDEOS");
-        homeDir       = System.getProperty("user.home");
+        String[] userDirs = env.xdgUserDirs("MUSIC", "DESKTOP", "DOCUMENTS", "DOWNLOAD", "PICTURES", "PUBLICSHARE", "TEMPLATES", "VIDEOS");
+        homeDir       = env.homeDir();
         audioDir      = userDirs[0];
         desktopDir    = userDirs[1];
         documentDir   = userDirs[2];
         downloadDir   = userDirs[3];
-        fontDir       = Util.defaultIfNullOrEmptyExtended(System.getenv("XDG_DATA_HOME"), "/fonts",  homeDir, "/.local/share/fonts");
+        fontDir       = Util.defaultIfNullOrEmptyExtended(env.getenv("XDG_DATA_HOME"), "/fonts",  homeDir, "/.local/share/fonts");
         pictureDir    = userDirs[4];
         publicDir     = userDirs[5];
         templateDir   = userDirs[6];
         videoDir      = userDirs[7];
         break;
       case Constants.MAC:
-        homeDir       = System.getProperty("user.home");
+        homeDir       = env.homeDir();
         audioDir      = homeDir + "/Music";
         desktopDir    = homeDir + "/Desktop";
         documentDir   = homeDir + "/Documents";
@@ -337,12 +340,12 @@ public final class UserDirectories {
         videoDir      = homeDir + "/Movies";
         break;
       case Constants.IBMI:
-        homeDir       = System.getProperty("user.home");
+        homeDir       = env.homeDir();
         audioDir      = homeDir + "/Music";
         desktopDir    = homeDir + "/Desktop";
         documentDir   = homeDir + "/Documents";
         downloadDir   = homeDir + "/Downloads";
-        fontDir       = Util.defaultIfNullOrEmptyExtended(System.getenv("XDG_DATA_HOME"), "/fonts",  homeDir, "/.local/share/fonts");
+        fontDir       = Util.defaultIfNullOrEmptyExtended(env.getenv("XDG_DATA_HOME"), "/fonts",  homeDir, "/.local/share/fonts");
         pictureDir    = homeDir + "/Pictures";
         publicDir     = homeDir + "/Public";
         templateDir   = null;
