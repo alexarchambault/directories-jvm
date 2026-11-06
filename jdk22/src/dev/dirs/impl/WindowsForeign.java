@@ -43,8 +43,20 @@ public final class WindowsForeign implements Windows {
         throw new AssertionError("failed converting string " + folderId + " to KnownFolderId");
       }
       MemorySegment path = arena.allocate(C_POINTER);
-      SHGetKnownFolderPath(guidSegment, 0, MemorySegment.NULL, path);
-      return createStringFromSegment(path.get(C_POINTER, 0));
+      path.set(C_POINTER, 0, MemorySegment.NULL);
+      int hr = SHGetKnownFolderPath(guidSegment, 0, MemorySegment.NULL, path);
+      MemorySegment pszPath = path.get(C_POINTER, 0);
+      try {
+        // On failure, return "", like WindowsPowerShell does
+        if (hr != 0 || pszPath.equals(MemorySegment.NULL))
+          return "";
+        return createStringFromSegment(pszPath);
+      } finally {
+        // The buffer must be freed even if SHGetKnownFolderPath failed
+        // (CoTaskMemFree accepts NULL, but there's no need to call it then)
+        if (!pszPath.equals(MemorySegment.NULL))
+          CoTaskMemFree(pszPath);
+      }
     }
   }
 
@@ -143,6 +155,27 @@ public final class WindowsForeign implements Windows {
 
     public static final MethodHandle HANDLE = Linker.nativeLinker()
         .downcallHandle(findOrThrow("SHGetKnownFolderPath"), DESC);
+  }
+
+  /**
+   * {@snippet lang=c :
+   * extern void CoTaskMemFree(LPVOID pv)
+   * }
+   */
+  private static void CoTaskMemFree(MemorySegment pv) {
+    var handle = CoTaskMemFree.HANDLE;
+    try {
+      handle.invokeExact(pv);
+    } catch (Throwable throwable) {
+      throw new AssertionError("failed to invoke `CoTaskMemFree`", throwable);
+    }
+  }
+
+  private static class CoTaskMemFree {
+    public static final FunctionDescriptor DESC = FunctionDescriptor.ofVoid(C_POINTER);
+
+    public static final MethodHandle HANDLE = Linker.nativeLinker()
+        .downcallHandle(findOrThrow("CoTaskMemFree"), DESC);
   }
 
 }
