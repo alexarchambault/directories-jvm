@@ -293,6 +293,7 @@ public final class ProjectDirectories {
     *                     and Windows).<br>
     *                     Example values: {@code "Foo Corp"}, {@code "Alice and Bob Inc"}, {@code ""}
     * @param application  The name of the application itself.<br>
+    *                     On Linux/BSD, if it is null or empty, the organization is used instead.<br>
     *                     Example values: {@code "Bar App"}, {@code "ExampleProgram"}, {@code "Unicorn-Programme"}
     *
     * @return An instance of {@code ProjectDirectories}, whose directory field values are based on the
@@ -312,7 +313,11 @@ public final class ProjectDirectories {
       case Constants.SOLARIS:
       case Constants.IBMI:
       case Constants.AIX:
-        path = Util.trimLowercaseReplaceWhitespace(application, "", true);
+        // Fall back to the organization when no application name is given, so that the
+        // project directories never end up being the base directories themselves
+        path = Util.isNullOrEmpty(application) ? "" : Util.trimLowercaseReplaceWhitespace(application, "", true);
+        if (path.isEmpty() && !Util.isNullOrEmpty(organization))
+          path = Util.trimLowercaseReplaceWhitespace(organization, "", true);
         break;
       case Constants.MAC:
         path = MacOs.applicationPath(qualifier, organization, application);
@@ -323,6 +328,8 @@ public final class ProjectDirectories {
       default:
         throw new UnsupportedOperatingSystemException("Project directories are not supported on " + Constants.operatingSystemName);
     }
+    if (path.isEmpty())
+      throw new UnsupportedOperationException("organization and application arguments cannot both be null/empty/blank");
     return fromPath(path, windows);
   }
 
