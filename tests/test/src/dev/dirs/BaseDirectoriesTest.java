@@ -122,7 +122,12 @@ public final class BaseDirectoriesTest {
     BaseDirectories d = BaseDirectories.get(noWindows(), TestEnv.mac());
     assertEquals(a, b);
     assertEquals(a.hashCode(), b.hashCode());
-    assertEquals(c, c);
+    BaseDirectories c2 = BaseDirectories.get(noWindows(), linux());
+    assertEquals(c, c2); // null runtimeDir on both sides
+    assertEquals(c.hashCode(), c2.hashCode());
+    BaseDirectories d2 = BaseDirectories.get(noWindows(), TestEnv.mac());
+    assertEquals(d, d2); // null executableDir and runtimeDir on both sides
+    assertEquals(d.hashCode(), d2.hashCode());
     assertNotEquals(a, c); // differ by runtimeDir only
     assertNotEquals(c, a);
     assertNotEquals(c, d);

@@ -384,34 +384,18 @@ public final class ProjectDirectories {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     ProjectDirectories that = (ProjectDirectories) o;
-
-    if (!projectPath.equals(that.projectPath)) return false;
-    if (cacheDir      != null ? !cacheDir     .equals(that.cacheDir)      : that.cacheDir      != null)
-      return false;
-    if (configDir     != null ? !configDir    .equals(that.configDir)     : that.configDir     != null)
-      return false;
-    if (dataDir       != null ? !dataDir      .equals(that.dataDir)       : that.dataDir       != null)
-      return false;
-    if (dataLocalDir  != null ? !dataLocalDir .equals(that.dataLocalDir)  : that.dataLocalDir  != null)
-      return false;
-    if (preferenceDir != null ? !preferenceDir.equals(that.preferenceDir) : that.preferenceDir != null)
-      return false;
-    if (runtimeDir    != null ? !runtimeDir   .equals(that.runtimeDir)    : that.runtimeDir    != null)
-      return false;
-    return true;
+    return Objects.equals(projectPath, that.projectPath) &&
+        Objects.equals(cacheDir, that.cacheDir) &&
+        Objects.equals(configDir, that.configDir) &&
+        Objects.equals(dataDir, that.dataDir) &&
+        Objects.equals(dataLocalDir, that.dataLocalDir) &&
+        Objects.equals(preferenceDir, that.preferenceDir) &&
+        Objects.equals(runtimeDir, that.runtimeDir);
   }
 
   @Override
   public int hashCode() {
-    int result = projectPath.hashCode();
-    result = 31 * result + (cacheDir      != null ? cacheDir     .hashCode() : 0);
-    result = 31 * result + (configDir     != null ? configDir    .hashCode() : 0);
-    result = 31 * result + (dataDir       != null ? dataDir      .hashCode() : 0);
-    result = 31 * result + (dataLocalDir  != null ? dataLocalDir .hashCode() : 0);
-    result = 31 * result + (preferenceDir != null ? preferenceDir.hashCode() : 0);
-    result = 31 * result + (runtimeDir    != null ? runtimeDir   .hashCode() : 0);
-    return result;
+    return Objects.hash(projectPath, cacheDir, configDir, dataDir, dataLocalDir, preferenceDir, runtimeDir);
   }
 }

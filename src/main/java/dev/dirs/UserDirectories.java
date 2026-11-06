@@ -3,6 +3,7 @@ package dev.dirs;
 import dev.dirs.impl.Util;
 import dev.dirs.impl.Windows;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /** {@code UserDirectories} provides paths of user-facing standard directories, following the conventions of the operating system the library is running on.
@@ -397,46 +398,21 @@ public final class UserDirectories {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     UserDirectories that = (UserDirectories) o;
-
-    if (homeDir     != null ? !homeDir    .equals(that.homeDir)     : that.homeDir     != null)
-      return false;
-    if (audioDir    != null ? !audioDir   .equals(that.audioDir)    : that.audioDir    != null)
-      return false;
-    if (fontDir     != null ? !fontDir    .equals(that.fontDir)     : that.fontDir     != null)
-      return false;
-    if (desktopDir  != null ? !desktopDir .equals(that.desktopDir)  : that.desktopDir  != null)
-      return false;
-    if (documentDir != null ? !documentDir.equals(that.documentDir) : that.documentDir != null)
-      return false;
-    if (downloadDir != null ? !downloadDir.equals(that.downloadDir) : that.downloadDir != null)
-      return false;
-    if (pictureDir  != null ? !pictureDir .equals(that.pictureDir)  : that.pictureDir  != null)
-      return false;
-    if (publicDir   != null ? !publicDir  .equals(that.publicDir)   : that.publicDir   != null)
-      return false;
-    if (templateDir != null ? !templateDir.equals(that.templateDir) : that.templateDir != null)
-      return false;
-    if (videoDir    != null ? !videoDir   .equals(that.videoDir)    : that.videoDir    != null)
-      return false;
-
-    return true;
+    return Objects.equals(homeDir, that.homeDir) &&
+        Objects.equals(audioDir, that.audioDir) &&
+        Objects.equals(fontDir, that.fontDir) &&
+        Objects.equals(desktopDir, that.desktopDir) &&
+        Objects.equals(documentDir, that.documentDir) &&
+        Objects.equals(downloadDir, that.downloadDir) &&
+        Objects.equals(pictureDir, that.pictureDir) &&
+        Objects.equals(publicDir, that.publicDir) &&
+        Objects.equals(templateDir, that.templateDir) &&
+        Objects.equals(videoDir, that.videoDir);
   }
 
   @Override
   public int hashCode() {
-    int result = 0;
-    result = 31 * result + (homeDir     != null ? homeDir    .hashCode() : 0);
-    result = 31 * result + (audioDir    != null ? audioDir   .hashCode() : 0);
-    result = 31 * result + (fontDir     != null ? fontDir    .hashCode() : 0);
-    result = 31 * result + (desktopDir  != null ? desktopDir .hashCode() : 0);
-    result = 31 * result + (documentDir != null ? documentDir.hashCode() : 0);
-    result = 31 * result + (downloadDir != null ? downloadDir.hashCode() : 0);
-    result = 31 * result + (pictureDir  != null ? pictureDir .hashCode() : 0);
-    result = 31 * result + (publicDir   != null ? publicDir  .hashCode() : 0);
-    result = 31 * result + (templateDir != null ? templateDir.hashCode() : 0);
-    result = 31 * result + (videoDir    != null ? videoDir   .hashCode() : 0);
-    return result;
+    return Objects.hash(homeDir, audioDir, fontDir, desktopDir, documentDir, downloadDir, pictureDir, publicDir, templateDir, videoDir);
   }
 }
