@@ -55,7 +55,7 @@ public final class Util {
       int next = index + Character.charCount(codepoint);
       if (codepoint == ' ') {
         if (charsBefore && replace && next < length && value.charAt(next) != ' ') {
-          buf.append('-');
+          buf.append(replacement);
           charsBefore = false;
         }
       } else {

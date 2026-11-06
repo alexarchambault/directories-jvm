@@ -62,6 +62,22 @@ public final class UtilTest {
   }
 
   @Test
+  public void testTrimLowercaseAndReplaceWhitespacesCustomReplacement01() {
+    final String input    = "  Bar  App  ";
+    final String actual   = Util.trimLowercaseReplaceWhitespace(input, "_", true);
+    final String expected = "bar_app";
+    assertEquals(input, expected, actual);
+  }
+
+  @Test
+  public void testTrimLowercaseAndReplaceWhitespacesCustomReplacement02() {
+    final String input    = "Foo Bar App";
+    final String actual   = Util.trimLowercaseReplaceWhitespace(input, "--", false);
+    final String expected = "Foo--Bar--App";
+    assertEquals(input, expected, actual);
+  }
+
+  @Test
   public void testTrimLowercaseAndReplaceWhitespacesNonBmp01() {
     final String input    = "\uD83D\uDE00 My App";
     final String actual   = Util.trimLowercaseReplaceWhitespace(input, "-", true);
