@@ -188,8 +188,8 @@ trait Tests extends Cross.Module[String] with JavaModule {
   object test extends JavaTests with Jdk8CompatibleTests {
     def runsOnJdk8 = crossValue == "8"
     def mvnDeps = super.mvnDeps() ++ Seq(
-      mvn"junit:junit:4.13",
-      mvn"com.novocode:junit-interface:0.11"
+      mvn"junit:junit:4.13.2",
+      mvn"com.github.sbt:junit-interface:0.13.3"
     )
     def testFramework = "com.novocode.junit.JUnitFramework"
   }
@@ -218,8 +218,8 @@ trait TestsJni extends Cross.Module[String] with JavaModule {
   object test extends JavaTests with Jdk8CompatibleTests {
     def runsOnJdk8 = crossValue == "8"
     def mvnDeps = super.mvnDeps() ++ Seq(
-      mvn"junit:junit:4.13",
-      mvn"com.novocode:junit-interface:0.11"
+      mvn"junit:junit:4.13.2",
+      mvn"com.github.sbt:junit-interface:0.13.3"
     )
     def testFramework = "com.novocode.junit.JUnitFramework"
   }
