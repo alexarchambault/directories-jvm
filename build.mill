@@ -97,7 +97,10 @@ object directories extends JavaModule with DirectoriesPublishModule {
     resourceDirs() ++ Seq(jdk22ClassesResources())
   }
   def manifest = Task {
-    super.manifest().add("Multi-Release" -> "true")
+    super.manifest().add(
+      "Multi-Release" -> "true",
+      "Automatic-Module-Name" -> "dev.dirs"
+    )
   }
 }
 
@@ -109,6 +112,9 @@ object `directories-jni` extends JavaModule with DirectoriesPublishModule {
   def javacOptions = super.javacOptions() ++ Seq(
     "--release", "8"
   )
+  def manifest = Task {
+    super.manifest().add("Automatic-Module-Name" -> "dev.dirs.jni")
+  }
 }
 
 object jdk22 extends JavaModule {
