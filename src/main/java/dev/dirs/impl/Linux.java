@@ -10,10 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 public final class Linux {
 
-  private Linux() {
-    throw new Error();
-  }
-
+  private Linux() {}
 
   static String ensureSingleSlash(String arg1, String arg2) {
     boolean arg1Slash = arg1.endsWith("/");

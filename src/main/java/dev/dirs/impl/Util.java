@@ -1,9 +1,5 @@
 package dev.dirs.impl;
 
-import dev.dirs.UnsupportedOperatingSystemException;
-
-import java.util.Locale;
-
 import static java.util.Objects.requireNonNull;
 
 public final class Util {
