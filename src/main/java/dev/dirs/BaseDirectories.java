@@ -70,7 +70,7 @@ public final class BaseDirectories {
     * </tr>
     * <tr>
     * <td>Windows</td>
-    * <td>{@code {FOLDERID_LocalAppData}}\cache</td>
+    * <td>{@code {FOLDERID_LocalAppData}}</td>
     * <td>C:\Users\Alice\AppData\Local</td>
     * </tr>
     * </table>
